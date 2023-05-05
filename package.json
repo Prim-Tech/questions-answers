@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "npx jest --questionsAnswers.test.js",
+    "coverage": "jest --coverage",
     "server-dev": "npx nodemon App.js"
   },
   "repository": {
