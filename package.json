@@ -1,0 +1,29 @@
+{
+  "name": "questions-answers",
+  "version": "1.0.0",
+  "description": "This repository is for my SDC project in Hack Reactor. Its main focus is for the question and answers widget for our cohorts FEC project.",
+  "main": "index.js",
+  "scripts": {
+    "test": "npx jest --questionsAnswers.test.js",
+    "server-dev": "npx nodemon App.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Prim-Tech/questions-answers.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Prim-Tech/questions-answers/issues"
+  },
+  "homepage": "https://github.com/Prim-Tech/questions-answers#readme",
+  "dependencies": {
+    "bluebird": "^3.7.2",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "jest": "^29.5.0",
+    "mongoose": "^7.0.3",
+    "pg": "^8.10.0",
+    "supertest": "^6.3.3"
+  }
+}
