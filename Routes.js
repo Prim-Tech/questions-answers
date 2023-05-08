@@ -9,8 +9,6 @@ router.get("/test", (req, res) => {
 });
 
 router.get("/qa/questions", (req, res) => {
-  console.log("testing", req.query);
-
   //Additional params are made through.. '?params1=1&params2=2&params3=3'
   var product_id = req.query.product_id; //string result
   var product_page = req.query.page || 1; // if none will DEFAULT to a NUMBER 1 not STRING
@@ -28,7 +26,7 @@ router.get("/qa/questions", (req, res) => {
     `SELECT json_build_object(
       'product_id', ${product_id},
       'results',
-        (WITH questionData AS (SELECT * from questions WHERE product_id = ${product_id}  OFFSET ${product_page} LIMIT ${product_count})
+      COALESCE((WITH questionData AS (SELECT * from questions WHERE product_id = ${product_id} AND reported <> 1 OFFSET ${product_page} LIMIT ${product_count})
 
         SELECT json_agg(json_build_object(
         'question_id', questionData.question_id,
@@ -52,7 +50,7 @@ router.get("/qa/questions", (req, res) => {
 
         )) FROM answers WHERE answers.question_id = questionData.question_id), '{}')
         )) FROM questionData
-        )
+        ), '[]')
       )`,
   )
     .then((data) => {
@@ -85,19 +83,19 @@ router.get("/qa/questions/:question_id/answers", (req, res) => {
       'question', ${question_id},
       'page', ${page},
       'count', ${count},
-      'results', (WITH answerData AS (SELECT * FROM answers WHERE question_id = ${question_id} LIMIT ${count})
+      'results', COALESCE((WITH answerData AS (SELECT * FROM answers WHERE question_id = ${question_id} AND reported <> 1 LIMIT ${count})
         SELECT json_agg(json_build_object(
           'answer_id', answerData.answer_id,
           'body', answerData.body,
           'date', (SELECT to_char(TO_TIMESTAMP(answerData.date/1000), 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')),
           'answerer_name', answerData.answerer_name,
           'helpfulness', answerData.helpfulness,
-          'photo', COALESCE((SELECT json_agg(json_build_object(
+          'photos', COALESCE((SELECT json_agg(json_build_object(
             'id', photos.id,
             'url', photos.url
           )) FROM photos WHERE photos.answer_id = answerData.answer_id), '[]')
         )) FROM answerData
-      )
+      ), '[]')
     )`,
   )
     .then((data) => {
@@ -114,6 +112,8 @@ router.get("/qa/questions/:question_id/answers", (req, res) => {
 
 router.post("/qa/questions", (req, res) => {
   //AERIO front end handles the fact that the body, name, email and product_id has all be filled out before submitting.
+
+  console.log(req);
 
   var product_id = Number(req.body.product_id);
 
@@ -159,6 +159,112 @@ router.post("/qa/questions", (req, res) => {
     .catch((error) => {
       console.log("error post to question", error);
       res.status(404).send("error");
+    });
+});
+
+router.post("/qa/questions/:question_id/answers", (req, res) => {
+  var question_id = req.params.question_id;
+  var { body, name, email } = req.body;
+  var photosArray = req.body.photos;
+
+  if (Array.isArray(photosArray) === true) {
+    photosArray = JSON.stringify(photosArray);
+  }
+
+  let date = new Date();
+  let unixMS = date.getTime();
+  const reported = 0;
+  const helpfulness = 0;
+
+  PostgreSQL.query(
+    `WITH answersRef AS (INSERT INTO answers (
+      question_id, body, date, answerer_name, answerer_email, reported, helpfulness)
+      VALUES ('${question_id}', '${body}', '${unixMS}', '${name}', '${email}', '${reported}', '${helpfulness}')
+      RETURNING answer_id)
+      INSERT INTO photos (answer_id, url) VALUES ((SELECT answer_id FROM answersRef), json_array_elements_text('${photosArray}'))`,
+  )
+    .then((data) => {
+      if (!data) {
+        throw data;
+      }
+
+      console.log(data);
+      res.status(200).send(data);
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(404).send(error);
+    });
+  /*
+  Remember that photos table has answer_id.
+  */
+});
+
+router.put("/qa/questions/:question_id/helpful", (req, res) => {
+  var question_id = req.params.question_id;
+
+  PostgreSQL.query(
+    `UPDATE questions SET question_helpfulness = question_helpfulness + 1 WHERE question_id = ${question_id}`,
+  )
+    .then((data) => {
+      if (!data) {
+        throw data;
+      }
+      res.status(204).send(data);
+    })
+    .catch((error) => {
+      res.status(400).send(error);
+    });
+});
+
+router.put("/qa/questions/:question_id/report", (req, res) => {
+  var question_id = req.params.question_id;
+
+  PostgreSQL.query(
+    `UPDATE questions SET reported = 1 WHERE question_id = ${question_id}`,
+  )
+    .then((data) => {
+      if (!data) {
+        throw data;
+      }
+      res.status(204).send(data);
+    })
+    .catch((error) => {
+      res.status(400).send(error);
+    });
+});
+
+router.put("/qa/answers/:answer_id/helpful", (req, res) => {
+  var answer_id = req.params.answer_id;
+
+  PostgreSQL.query(
+    `UPDATE answers SET helpfulness = helpfulness + 1 WHERE answer_id = ${answer_id}`,
+  )
+    .then((data) => {
+      if (!data) {
+        throw data;
+      }
+      res.status(204).send(data);
+    })
+    .catch((error) => {
+      res.status(400).send(error);
+    });
+});
+
+router.put("/qa/answers/:answer_id/report", (req, res) => {
+  var answer_id = req.params.answer_id;
+
+  PostgreSQL.query(
+    `UPDATE answers SET reported = 1 WHERE answer_id = ${answer_id}`,
+  )
+    .then((data) => {
+      if (!data) {
+        throw data;
+      }
+      res.status(204).send(data);
+    })
+    .catch((error) => {
+      res.status(400).send(error);
     });
 });
 
