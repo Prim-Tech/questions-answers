@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/Prim-Tech/questions-answers#readme",
   "dependencies": {
+    "axios": "^1.4.0",
     "bluebird": "^3.7.2",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",

@@ -3,7 +3,7 @@ const PostgreSQL = require("./PostgreSQL.js");
 
 const router = express.Router();
 
-//TEST PURPOSE ONLY
+// TEST PURPOSE ONLY
 router.get("/test", (req, res) => {
   res.status(200).send({ message: "testing" });
 });
@@ -57,7 +57,6 @@ router.get("/qa/questions", (req, res) => {
       if (!data) {
         throw data;
       }
-      console.log("query data --->", data.rows[0].json_build_object);
       res.send(data.rows[0].json_build_object);
     })
     .catch((err) => {
@@ -154,11 +153,11 @@ router.post("/qa/questions", (req, res) => {
         throw data;
       }
       console.log("successful post to question");
-      res.status(200).send("done");
+      res.status(200).send(data);
     })
     .catch((error) => {
       console.log("error post to question", error);
-      res.status(404).send("error");
+      res.status(404).send(error);
     });
 });
 
