@@ -57,10 +57,10 @@ router.get("/qa/questions", (req, res) => {
       if (!data) {
         throw data;
       }
-      res.send(data.rows[0].json_build_object);
+      res.status(200).send(data.rows[0].json_build_object);
     })
     .catch((err) => {
-      console.log(err);
+      res.status(404).send(err);
     });
 });
 
@@ -101,18 +101,15 @@ router.get("/qa/questions/:question_id/answers", (req, res) => {
       if (!data) {
         throw data;
       }
-      console.log(data.rows[0].json_build_object);
-      res.send(data.rows[0].json_build_object);
+      res.status(200).send(data.rows[0].json_build_object);
     })
     .catch((err) => {
-      console.log(err);
+      res.status(404).send(err);
     });
 });
 
 router.post("/qa/questions", (req, res) => {
   //AERIO front end handles the fact that the body, name, email and product_id has all be filled out before submitting.
-
-  console.log(req);
 
   var product_id = Number(req.body.product_id);
 
@@ -126,25 +123,6 @@ router.post("/qa/questions", (req, res) => {
   const reported = 0;
   const questionHelp = 0;
 
-  console.log(
-    product_id,
-    questionBody,
-    unixMS,
-    name,
-    email,
-    reported,
-    questionHelp,
-  );
-  /*
-    product_id = int
-    question_body = varchar
-    question_date = big int
-    asker_name = varchar
-    asker_email = varchar
-    reported = integer (0)
-    questionhelpfulness (0)
-  */
-
   PostgreSQL.query(
     `INSERT INTO questions (product_id, question_body, question_date, asker_name, asker_email, reported, question_helpfulness) VALUES ('${product_id}', '${questionBody}', '${unixMS}', '${name}', '${email}', '${reported}', '${questionHelp}')`,
   )
@@ -152,11 +130,9 @@ router.post("/qa/questions", (req, res) => {
       if (!data) {
         throw data;
       }
-      console.log("successful post to question");
-      res.status(200).send(data);
+      res.status(201).send(data);
     })
     .catch((error) => {
-      console.log("error post to question", error);
       res.status(404).send(error);
     });
 });
@@ -186,12 +162,9 @@ router.post("/qa/questions/:question_id/answers", (req, res) => {
       if (!data) {
         throw data;
       }
-
-      console.log(data);
-      res.status(200).send(data);
+      res.status(201).send(data);
     })
     .catch((error) => {
-      console.log(error);
       res.status(404).send(error);
     });
   /*
