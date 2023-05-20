@@ -47,12 +47,12 @@ ALTER TABLE questions ALTER COLUMN question_date TYPE bigint USING question_date
 ALTER TABLE answers ALTER COLUMN date TYPE bigint USING date::bigint;
 
 -- Create Index for faster query calls.
--- CREATE INDEX product_id_idx ON questions(product_id);
--- CREATE INDEX answer_id_idx ON answers(answer_id);
--- CREATE INDEX photo_id_idx ON photos(id);
--- CREATE INDEX question_id_idx ON questions(question_id);
--- CREATE INDEX answers_questions_id_idx ON answers(question_id);
--- CREATE INDEX photos_answers_id_idx ON photos(answer_id);
+CREATE INDEX product_id_idx ON questions(product_id);
+CREATE INDEX answer_id_idx ON answers(answer_id);
+CREATE INDEX photo_id_idx ON photos(id);
+CREATE INDEX question_id_idx ON questions(question_id);
+CREATE INDEX answers_questions_id_idx ON answers(question_id);
+CREATE INDEX photos_answers_id_idx ON photos(answer_id);
 
 -- Reseting the SERIAL SEQUENCE
 SELECT setval('questions_question_id_seq', (SELECT MAX(question_id) FROM questions)+1);
