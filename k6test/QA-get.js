@@ -22,7 +22,7 @@ export const options = {
 
       // It should start 30 iterations per `timeUnit`. Note that iterations starting points
       // will be evenly spread across the `timeUnit` period.
-      rate: 100,
+      rate: 1000,
 
       // It should start `rate` iterations per second
       timeUnit: "1s",
@@ -32,7 +32,7 @@ export const options = {
 
       // It is allowed to spin up to 100 maximum VUs to sustain the defined
       // constant arrival rate.
-      maxVUs: 100,
+      maxVUs: 1000,
     },
   },
 };
