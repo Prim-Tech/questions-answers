@@ -4,9 +4,9 @@ const PostgreSQL = require("./PostgreSQL.js");
 const router = express.Router();
 
 // TEST PURPOSE ONLY
-router.get("/test", (req, res) => {
-  res.status(200).send({ message: "testing" });
-});
+// router.get("/test", (req, res) => {
+//   res.status(200).send({ message: "testing" });
+// });
 
 router.get("/qa/questions", (req, res) => {
   //Additional params are made through.. '?params1=1&params2=2&params3=3'
