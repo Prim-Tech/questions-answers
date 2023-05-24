@@ -169,7 +169,7 @@ router.get("/qa/questions/:question_id/answers", (req, res) => {
             JSON.stringify(redisAnswerKey),
             JSON.stringify(data.rows[0].json_build_object),
           );
-          redisClient.EXPIRE(JSON.stringify(redisAKey), 1200);
+          redisClient.EXPIRE(JSON.stringify(redisAnswerKey), 1200);
           console.log("questions redis SAVE!");
           res.status(200).send(data.rows[0].json_build_object);
         })
