@@ -27,17 +27,10 @@ router.get("/qa/questions", (req, res) => {
   var product_page = req.query.page || 1; // if none will DEFAULT to a NUMBER 1 not STRING
   var product_count = req.query.count || 5; // if none will DEFAULT to a NUMBER 5 not STRING
 
-  var redisQuestionKey = {
-    0: "questions",
-    1: product_id,
-    2: product_page,
-    3: product_count,
-  };
-
   //SEARCH REDIS, IF THE STATTEME
 
   redisClient
-    .get(JSON.stringify(redisQuestionKey))
+    .get(`question: ${product_id}`)
     .then((data) => {
       if (!data) {
         throw data;
@@ -45,8 +38,6 @@ router.get("/qa/questions", (req, res) => {
 
       // //CAN ADD EXPIRATION DATE THAT MEANS THAT THE QUESTION WAS BROUGHT UP AGAIN
       // redisClient.EXPIRE(JSON.stringify(redisQuestionKey), 1200);
-
-      console.log("redis hit!");
       //iF THE DATA is already inside of REDIS, then send it back through redis RAM instead of querying the database o(1)
       res.status(200).send(JSON.parse(data));
     })
@@ -96,13 +87,12 @@ router.get("/qa/questions", (req, res) => {
           }
           //ADDING INTO REDIS IF NOT FOUND INSIDE OF REDIS KEY
           redisClient.set(
-            JSON.stringify(redisQuestionKey),
+            `question: ${product_id}`,
             JSON.stringify(data.rows[0].json_build_object),
           );
           //GIVING THE ADDED KEY AN EXPIRATION DATE
-          redisClient.EXPIRE(JSON.stringify(redisQuestionKey), 1200);
+          // redisClient.EXPIRE(JSON.stringify(redisQuestionKey), 1200);
           //SENDING DATA BACK TO THE FRONT END.
-          console.log(JSON.stringify(redisQuestionKey));
           res.status(200).send(data.rows[0].json_build_object);
         })
         .catch((err) => {
@@ -124,20 +114,12 @@ router.get("/qa/questions/:question_id/answers", (req, res) => {
   var page = req.query.page || 1; // WHY IS THIS 0 NORMALLY on glearn
   var count = req.query.count || 5;
 
-  var redisAnswerKey = {
-    0: "answer",
-    1: question_id,
-    2: page,
-    3: count,
-  };
-
   redisClient
-    .get(JSON.stringify(redisAnswerKey))
+    .get(`answer: ${question_id}`)
     .then((data) => {
       if (!data) {
         throw data;
       }
-      console.log("questions redis hit!");
       res.status(200).send(JSON.parse(data));
     })
     .catch((error) => {
@@ -166,11 +148,10 @@ router.get("/qa/questions/:question_id/answers", (req, res) => {
             throw data;
           }
           redisClient.set(
-            JSON.stringify(redisAnswerKey),
+            `answer: ${question_id}`,
             JSON.stringify(data.rows[0].json_build_object),
           );
-          redisClient.EXPIRE(JSON.stringify(redisAnswerKey), 1200);
-          console.log("questions redis SAVE!");
+          // redisClient.EXPIRE(JSON.stringify(redisAnswerKey), 1200);
           res.status(200).send(data.rows[0].json_build_object);
         })
         .catch((err) => {
