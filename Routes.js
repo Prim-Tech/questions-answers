@@ -3,10 +3,23 @@ const PostgreSQL = require("./PostgreSQL.js");
 
 const router = express.Router();
 
+const Redis = require("redis");
+let redisClient;
+
+(async () => {
+  redisClient = Redis.createClient();
+
+  redisClient.on("error", (error) => console.error(`Error : ${error}`));
+
+  await redisClient.connect();
+})();
+
+var DEFAULT_EXPIRATION = "10";
+
 // TEST PURPOSE ONLY
-// router.get("/test", (req, res) => {
-//   res.status(200).send({ message: "testing" });
-// });
+router.get("/test", (req, res) => {
+  res.status(200).send({ message: "testing" });
+});
 
 router.get("/qa/questions", (req, res) => {
   //Additional params are made through.. '?params1=1&params2=2&params3=3'
@@ -14,16 +27,40 @@ router.get("/qa/questions", (req, res) => {
   var product_page = req.query.page || 1; // if none will DEFAULT to a NUMBER 1 not STRING
   var product_count = req.query.count || 5; // if none will DEFAULT to a NUMBER 5 not STRING
 
-  PostgreSQL.query(
-    // We are not selecting anything, but we are using json_build_object to build out the object, however, we cannot use build object without select tag before it
-    //offset
-    // This list does not include any 'reported' questions. consider this.  (SELECT to_char(questionData.question_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))
+  var redisQuestionKey = {
+    0: "questions",
+    1: product_id,
+    2: product_page,
+    3: product_count,
+  };
 
-    /*
+  //SEARCH REDIS, IF THE STATTEME
+
+  redisClient
+    .get(JSON.stringify(redisQuestionKey))
+    .then((data) => {
+      if (!data) {
+        throw data;
+      }
+
+      // //CAN ADD EXPIRATION DATE THAT MEANS THAT THE QUESTION WAS BROUGHT UP AGAIN
+      // redisClient.EXPIRE(JSON.stringify(redisQuestionKey), 1200);
+
+      console.log("redis hit!");
+      //iF THE DATA is already inside of REDIS, then send it back through redis RAM instead of querying the database o(1)
+      res.status(200).send(JSON.parse(data));
+    })
+    .catch((err) => {
+      PostgreSQL.query(
+        // We are not selecting anything, but we are using json_build_object to build out the object, however, we cannot use build object without select tag before it
+        //offset
+        // This list does not include any 'reported' questions. consider this.  (SELECT to_char(questionData.question_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'))
+
+        /*
         CHANGE THE COLUMN IN QUESTIONS TO TIMESTAMP FOR THE DATE
         ALTER TABLE questions ALTER COLUMN question_date TYPE timestamp USING TO_TIMESTAMP(question_date/1000);
         */
-    `SELECT json_build_object(
+        `SELECT json_build_object(
           'product_id', ${product_id},
           'results',
           COALESCE((WITH questionData AS (SELECT * from questions WHERE product_id = ${product_id} AND reported <> 1 OFFSET ${product_page} LIMIT ${product_count})
@@ -52,15 +89,25 @@ router.get("/qa/questions", (req, res) => {
             )) FROM questionData
             ), '[]')
           )`,
-  )
-    .then((data) => {
-      if (!data) {
-        throw data;
-      }
-      res.status(200).send(data.rows[0].json_build_object);
-    })
-    .catch((err) => {
-      res.status(404).send(err);
+      )
+        .then((data) => {
+          if (!data) {
+            throw data;
+          }
+          //ADDING INTO REDIS IF NOT FOUND INSIDE OF REDIS KEY
+          redisClient.set(
+            JSON.stringify(redisQuestionKey),
+            JSON.stringify(data.rows[0].json_build_object),
+          );
+          //GIVING THE ADDED KEY AN EXPIRATION DATE
+          redisClient.EXPIRE(JSON.stringify(redisQuestionKey), 1200);
+          //SENDING DATA BACK TO THE FRONT END.
+          console.log(JSON.stringify(redisQuestionKey));
+          res.status(200).send(data.rows[0].json_build_object);
+        })
+        .catch((err) => {
+          res.status(404).send(err);
+        });
     });
 });
 
@@ -77,8 +124,25 @@ router.get("/qa/questions/:question_id/answers", (req, res) => {
   var page = req.query.page || 1; // WHY IS THIS 0 NORMALLY on glearn
   var count = req.query.count || 5;
 
-  PostgreSQL.query(
-    `SELECT json_build_object(
+  var redisAnswerKey = {
+    0: "answer",
+    1: question_id,
+    2: page,
+    3: count,
+  };
+
+  redisClient
+    .get(JSON.stringify(redisAnswerKey))
+    .then((data) => {
+      if (!data) {
+        throw data;
+      }
+      console.log("questions redis hit!");
+      res.status(200).send(JSON.parse(data));
+    })
+    .catch((error) => {
+      PostgreSQL.query(
+        `SELECT json_build_object(
           'question', ${question_id},
           'page', ${page},
           'count', ${count},
@@ -96,15 +160,22 @@ router.get("/qa/questions/:question_id/answers", (req, res) => {
             )) FROM answerData
           ), '[]')
         )`,
-  )
-    .then((data) => {
-      if (!data) {
-        throw data;
-      }
-      res.status(200).send(data.rows[0].json_build_object);
-    })
-    .catch((err) => {
-      res.status(404).send(err);
+      )
+        .then((data) => {
+          if (!data) {
+            throw data;
+          }
+          redisClient.set(
+            JSON.stringify(redisAnswerKey),
+            JSON.stringify(data.rows[0].json_build_object),
+          );
+          redisClient.EXPIRE(JSON.stringify(redisAnswerKey), 1200);
+          console.log("questions redis SAVE!");
+          res.status(200).send(data.rows[0].json_build_object);
+        })
+        .catch((err) => {
+          res.status(404).send(err);
+        });
     });
 });
 
