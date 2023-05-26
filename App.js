@@ -20,7 +20,7 @@ app.use(`/${process.env.LOADER_IO}`, (req, res) => {
 
 app.use("/", router);
 
-app.listen(9000, () => {
+app.listen(process.env.SERVER_PORT, () => {
   console.log("Successfully listening to Questions and Answers API");
 });
 
