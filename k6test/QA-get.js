@@ -43,16 +43,16 @@ export default function () {
 
   const id = Math.floor(Math.random() * (max - min + 1)) + min;
 
-  // var questions = http.get(
-  //   `http://localhost:9000/qa/questions?product_id=${id}`,
-  // );
-  // check(questions, { "status was 200": (r) => r.status === 200 });
-
-  var answers = http.get(
-    `http://localhost:9000/qa/questions/${id}/answers`,
-    {},
+  var questions = http.get(
+    `http://18.218.52.100:9000/qa/questions?product_id=${id}`,
   );
-  check(answers, { "status was 200": (r) => r.status === 200 });
+  check(questions, { "status was 200": (r) => r.status === 200 });
+
+  // var answers = http.get(
+  //   `http://localhost:9000/qa/questions/${id}/answers`,
+  //   {},
+  // );
+  // check(answers, { "status was 200": (r) => r.status === 200 });
 
   // http.get(`http://localhost:9000/qa/questions?product_id=${id}`);
 

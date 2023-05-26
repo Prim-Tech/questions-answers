@@ -59,4 +59,8 @@ SELECT setval('questions_question_id_seq', (SELECT MAX(question_id) FROM questio
 SELECT setval('answers_answer_id_seq', (SELECT MAX(answer_id) FROM answers)+1);
 SELECT setval('photos_id_seq', (SELECT MAX(id) FROM photos)+1);
 
+-- Adding Foreign Keys
 
+
+ALTER TABLE answers ADD CONSTRAINT answers_foreign_constraint FOREIGN KEY (question_id) REFERENCES questions (question_id);
+ALTER TABLE photos ADD CONSTRAINT photos_foreign_constraint FOREIGN KEY (answer_id) REFERENCES answers (answer_id);
