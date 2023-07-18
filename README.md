@@ -16,6 +16,11 @@ This repository is for my SDC project in Hack Reactor. Its main focus is for the
 
 ## Table of Contents
 
+- [Description](#Description)
+- [Usage](#usage)
+- [Installation](#Installation)
+- [Contributors](#Contributors)
+
 ## Description 
 
 ## Usage
